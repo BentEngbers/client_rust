@@ -11,7 +11,11 @@ use prometheus_client::{
     registry::{Metric, Registry},
 };
 use prometheus_client_derive_encode::{EncodeLabelSet, EncodeLabelValue};
-use std::sync::{LazyLock, Mutex};
+use std::{
+    sync::{LazyLock, Mutex},
+    time::Duration,
+};
+use tokio::time;
 
 static REGISTRY: LazyLock<Mutex<Registry>> = LazyLock::new(|| Mutex::new(Registry::default()));
 
@@ -47,23 +51,24 @@ async fn metrics_handler() -> impl IntoResponse {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelValue)]
-pub enum Method {
-    Get,
-    Post,
+pub enum Type {
+    Request,
+    BackgroundTask,
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet)]
 pub struct MethodLabels {
-    pub method: Method,
+    pub method: Type,
 }
 
-static METRIC: LazyLock<Family<MethodLabels, Counter>> =
-    LazyLock::new(|| register_metric_to_global_registry("requests", "Count of requests"));
+static METRIC: LazyLock<Family<MethodLabels, Counter>> = LazyLock::new(|| {
+    register_metric_to_global_registry("requests_and_tasks", "Count of requests & tasks")
+});
 
 pub async fn some_handler() -> impl IntoResponse {
     METRIC
         .get_or_create(&MethodLabels {
-            method: Method::Get,
+            method: Type::Request,
         })
         .inc();
     "okay".to_string()
@@ -79,5 +84,18 @@ async fn main() {
         .await
         .unwrap();
 
-    axum::serve(listener, router).await.unwrap();
+    tokio::join!(axum::serve(listener, router), background_task());
+}
+
+async fn background_task() {
+    let mut interval = time::interval(Duration::from_secs(2));
+    loop {
+        interval.tick().await;
+        let current = METRIC
+            .get_or_create(&MethodLabels {
+                method: Type::BackgroundTask,
+            })
+            .inc();
+        println!("executed task: {current} times");
+    }
 }
