@@ -24,9 +24,9 @@ fn register_metric_to_global_registry<MetricType: Metric + Clone + Default>(
     help: &str,
 ) -> MetricType {
     let metric: MetricType = MetricType::default();
-    let mut registry = REGISTRY.lock().expect(&format!(
-        "Cannot lock metrics registry to create {name} metric"
-    ));
+    let mut registry = REGISTRY
+        .lock()
+        .unwrap_or_else(|_| panic!("Cannot lock metrics registry to create {name} metric"));
     registry.register(name, help, metric.clone());
     metric
 }
@@ -84,7 +84,9 @@ async fn main() {
         .await
         .unwrap();
 
-    tokio::join!(axum::serve(listener, router), background_task());
+    let (listener, _background_task) =
+        tokio::join!(axum::serve(listener, router), background_task());
+    listener.unwrap()
 }
 
 async fn background_task() {
