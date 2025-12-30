@@ -19,7 +19,7 @@ use tokio::time;
 
 static REGISTRY: LazyLock<Mutex<Registry>> = LazyLock::new(|| Mutex::new(Registry::default()));
 
-fn register_metric_to_global_registry<MetricType: Metric + Clone + Default>(
+pub fn register_metric_to_global_registry<MetricType: Metric + Clone + Default>(
     name: &str,
     help: &str,
 ) -> MetricType {
@@ -31,7 +31,7 @@ fn register_metric_to_global_registry<MetricType: Metric + Clone + Default>(
     metric
 }
 
-async fn metrics_handler() -> impl IntoResponse {
+pub async fn metrics_handler() -> impl IntoResponse {
     let mut buffer = String::new();
     {
         let registry = REGISTRY
