@@ -17,11 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   feature is enabled. See [PR 242].
 - `Family` now exposes a `contains()` method when the `test-util` feature
   is enabled. See [PR 245].
+- `Family` now exposes `len()` and `is_empty()` methods when the
+  `test-util` feature is enabled. See [PR 246].
 
 [PR 279]: https://github.com/prometheus/client_rust/pull/279
 [PR 281]: https://github.com/prometheus/client_rust/pull/281
 [PR 242]: https://github.com/prometheus/client_rust/pull/242
 [PR 245]: https://github.com/prometheus/client_rust/pull/245
+[PR 246]: https://github.com/prometheus/client_rust/pull/246
 
 ## [0.24.0]
 
